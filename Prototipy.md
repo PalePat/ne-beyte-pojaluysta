@@ -1,7 +1,215 @@
 # ne-beyte-pojaluysta
-Итак, я плохо понимаю всё таки как эта штука работает, ваш этот гитхаб, но вроде разобрался как сделать то что нужно. Итак, что я решил выбрать в качестве проекта? Меня сильно тянет на игры, так что решил попробовать сделать игру в стиле RTS. Идеи о том, что там будет, где это будет, как это будет у меня есть. Единственное надо это граматно рассписать и презентовать. Текстом описывать это будет очень долго, было бы неплохо картинками показать задуманное, правда я пока не понимаю как картинки загружать сюда. Кратко расскажу надуманное. В проекте будет 6 фракций, скорее всего это слишком много для реализации задуманного и вы меня поправите после прочтения. Детальная информация будет дополняться постепенно, да и надеюсь можно будет картинки добовлять, чтобы лучше понимать в дальнейшем суть и не писать 10000 слов, чтобы описать.
+Итак, по итогу было решено сделать простенькую программу по типу блокнота. В данном блакноте можно добавлять задачи, уберать задачи, делать очистку задачи, посмотреть задачу, отредактировать, посмотреть статистику выполненых и удалённых задач.
+FILENAME = 'tasks.txt'
 
-1. Начну с основы, где будет происходить события и какая вообще история?
-События будут происходить на плонете, которая похожа на планету Корусант из вселенной Звёздные Войны в сеттинге будущего, в условиях городского боя, на сколько далёкого это конечно вопрос открытый пожалуй, но не суть важно мне кажется. В данной RTS будет строительная механика, механика захвата точек, которые будут приносить 2 разных ресурса, этими ресурсами будут являться "тактический ресурс" и "стратегический ресурс" за которые и будет всё покупаться. Также в игре будет система прокачки для каждой из фракций, где улучшения будут делать ещё сильнее их сильные качества, либо пытаться уменьшить слабые качества. Также будет система ограничений войск, а именно ограничения по количеству пехоты и по количеству техники. Внтури двух этих ограничений будет также присутствовать ограничения по количеству юнитов, дабы избежать такой ситуации, что игрок 1 дошёл до максимального тира войск, наклипал пачку самых дорогих и крутых юнитов на все ресурсы и победтил из-за этого игрока 2. Задумка сама по сибе оооочень сложная, я прекрасно это понимаю, но как по мне баланс в RTS - штука крайне нужная, а делать баланс на основе жёсткого ограничителя по лимиту или +- урон/хп/стоимость не очень эффективно как по мне. Также планирую сделать механику разного типа урона. Огнестрельный, огненный, разрывной, взрывной, энергитический. Также сделать систему морали у пехоты.
+def load_tasks():
+    tasks = []
+    try:
+        file = open(FILENAME, 'r', encoding='utf-8')
+        lines = file.readlines()
+        for line in lines:
+            line = line.strip()
+            if line:
+                parts = line.split('|')
+                if len(parts) == 2:
+                    title, status = parts
+                    tasks.append({'title': title, 'done': status == 'True'})
+        file.close()
+    except FileNotFoundError:
+        pass
+    return tasks
 
-В последствии информация будет доплняться, для начала думаю пока достаочно, тем более, что я думаю появится очень много вопросов, которые надо будет обговорить. У меня есть телеграмм контакт с вами в принципе, можно будет обсуждать этивопросы там, особенно сейчас, просто щас такая проблемау меня, мне надо трудоустраиваться, из-за чего щас и возможно ещё потолм буду много пропускать и встретиться лично в университете может и не получится к сожалению, а прокет как-то надо будет делать, особенно такого масшатаба, хоть и не всё я описал в этом файле. Я прошу меня в этом деле понять, я готов к диалогу, к вопросам, но из-за жизненных трудностей часть из них лично при встрече может и не получиться обсудить. Напомню ,что мой контакт в телеграмме P-H-A. Будут каике-то вопросы, а меня не будет в университете пишите, готов буду обсудить.
+def save_tasks(tasks):
+    file = open(FILENAME, 'w', encoding='utf-8')
+    for task in tasks:
+        file.write(f"{task['title']}|{str(task['done'])}\n")
+    file.close()
+
+def print_header(text):
+    print("\n" + "=" * 40)
+    print(f" {text} ")
+    print("=" * 40)
+
+def add_task(tasks):
+    print_header("ДОБАВЛЕНИЕ НОВОЙ ЗАДАЧИ")
+    while True:
+        title = input("Введите название задачи (или '0' для отмены): ").strip()
+        if title == '0':
+            print("Отмена.")
+            return
+        if title:
+            tasks.append({'title': title, 'done': False})
+            print("Задача успешно добавлена!")
+            break
+        else:
+            print("Название не может быть пустым!")
+
+def view_tasks(tasks):
+    if not tasks:
+        print_header("СПИСОК ЗАДАЧ")
+        print("Список задач пуст.")
+        return
+
+    print_header("СПИСОК ЗАДАЧ")
+    for i, task in enumerate(tasks, 1):
+        status = "✓ ВЫПОЛНЕНО" if task['done'] else "✗ НЕ ВЫПОЛНЕНО"
+        print(f"{i}. [{status}] {task['title']}")
+
+def mark_done(tasks):
+    view_tasks(tasks)
+    if not tasks:
+        return
+    while True:
+        choice = input("Введите номер задачи для отметки как выполненная (или '0' для отмены): ").strip()
+        if choice == '0':
+            print("Отмена.")
+            return
+        if choice.isdigit():
+            num = int(choice)
+            if 1 <= num <= len(tasks):
+                tasks[num - 1]['done'] = True
+                print("Задача отмечена как выполненная!")
+                break
+            else:
+                print("Неверный номер задачи.")
+        else:
+            print("Пожалуйста, введите число.")
+
+def delete_task(tasks):
+    view_tasks(tasks)
+    if not tasks:
+        return
+    while True:
+        choice = input("Введите номер задачи для удаления (или '0' для отмены): ").strip()
+        if choice == '0':
+            print("Отмена.")
+            return
+        if choice.isdigit():
+            num = int(choice)
+            if 1 <= num <= len(tasks):
+                removed = tasks.pop(num - 1)
+                print(f"Задача '{removed['title']}' удалена!")
+                break
+            else:
+                print("Неверный номер задачи.")
+        else:
+            print("Пожалуйста, введите число.")
+
+def edit_task(tasks):
+    view_tasks(tasks)
+    if not tasks:
+        return
+    while True:
+        choice = input("Введите номер задачи для редактирования (или '0' для отмены): ").strip()
+        if choice == '0':
+            print("Отмена.")
+            return
+        if choice.isdigit():
+            num = int(choice)
+            if 1 <= num <= len(tasks):
+                new_title = input(f"Введите новое название для задачи '{tasks[num-1]['title']}': ").strip()
+                if new_title:
+                    tasks[num - 1]['title'] = new_title
+                    print("Задача изменена!")
+                    break
+                else:
+                    print("Название не может быть пустым!")
+            else:
+                print("Неверный номер задачи.")
+        else:
+            print("Пожалуйста, введите число.")
+
+def search_tasks(tasks):
+    if not tasks:
+        print_header("ПОИСК")
+        print("Список задач пуст.")
+        return
+    query = input("Введите слово для поиска в задачах: ").strip().lower()
+    if not query:
+        print("Ничего не введено.")
+        return
+    found = []
+    for i, task in enumerate(tasks, 1):
+        if query in task['title'].lower():
+            found.append((i, task))
+    print_header(f"РЕЗУЛЬТАТЫ ПОИСКА ПО '{query}'")
+    if not found:
+        print("Совпадений не найдено.")
+    else:
+        for num, task in found:
+            status = "✓" if task['done'] else "✗"
+            print(f"{num}. [{status}] {task['title']}")
+
+def show_stats(tasks):
+    total = len(tasks)
+    done = sum(1 for t in tasks if t['done'])
+    todo = total - done
+    percent_done = (done / total * 100) if total > 0 else 0
+    print_header("СТАТИСТИКА ЗАДАЧ")
+    print(f"Всего задач: {total}")
+    print(f"Выполнено: {done}")
+    print(f"Осталось: {todo}")
+    print(f"Процент выполнения: {percent_done:.1f}%")
+
+def clear_all(tasks):
+    if not tasks:
+        print_header("ОЧИСТКА СПИСКА")
+        print("Список задач уже пуст.")
+        return
+    print_header("ОЧИСТКА СПИСКА")
+    confirm = input(f"Вы уверены, что хотите удалить все {len(tasks)} задач? (да/нет): ").strip().lower()
+    if confirm == 'да':
+        tasks.clear()
+        save_tasks(tasks)
+        print("Все задачи удалены!")
+    else:
+        print("Операция отменена.")
+
+def main_menu():
+    tasks = load_tasks()
+    while True:
+        print("\n" + "=" * 40)
+        print("| ГЛАВНОЕ МЕНЮ МЕНЕДЖЕРА ЗАДАЧ |")
+        print("| 1. Добавить задачу          |")
+        print("| 2. Просмотреть задачи       |")
+        print("| 3. Редактировать задачу     |")
+        print("| 4. Удалить задачу           |")
+        print("| 5. Отметить как выполненную |")
+        print("| 6. Поиск по задачам         |")
+        print("| 7. Статистика               |")
+        print("| 8. Очистить список          |")
+        print("| 9. Выход                    |")
+        print("=" * 40)
+        
+        choice = input("Ваш выбор: ").strip()
+        
+        if choice == '1':
+            add_task(tasks)
+            save_tasks(tasks)
+        elif choice == '2':
+            view_tasks(tasks)
+        elif choice == '3':
+            edit_task(tasks)
+            save_tasks(tasks)
+        elif choice == '4':
+            delete_task(tasks)
+            save_tasks(tasks)
+        elif choice == '5':
+            mark_done(tasks)
+            save_tasks(tasks)
+        elif choice == '6':
+            search_tasks(tasks)
+        elif choice == '7':
+            show_stats(tasks)
+        elif choice == '8':
+            clear_all(tasks)
+            save_tasks(tasks)
+        elif choice == '9':
+            print_header("ВЫХОД ИЗ ПРОГРАММЫ")
+            print("До свидания!")
+            break
+        else:
+            print_header("ОШИБКА")
+            print("Неверный выбор. Пожалуйста, введите число от 1 до 9.")
+
+if __name__ == "__main__":
